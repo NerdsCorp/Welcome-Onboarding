@@ -1,4 +1,4 @@
-name: Package welcomeonboarding plugin
+name: Package welcome-onboarding plugin
 
 on:
   release:
@@ -41,7 +41,7 @@ jobs:
           REPO="${{ github.repository }}"
           TAG="${{ steps.release.outputs.tag }}"
           VERSION="${{ steps.release.outputs.version }}"
-          DOWNLOAD_URL="https://github.com/$REPO/releases/download/$TAG/welcomeonboarding.zip"
+          DOWNLOAD_URL="https://github.com/$REPO/releases/download/$TAG/welcome-onboarding.zip"
 
           jq --arg version "$VERSION" '.version = $version' plugin.json > plugin.json.tmp
           mv plugin.json.tmp plugin.json
@@ -91,19 +91,19 @@ jobs:
       - name: Create pwa-plugin directory structure
         run: |
           mkdir -p welcomeonboarding
-          rsync -av --exclude='.git' --exclude='welcomeonboarding' ./ welcomeonboarding/
+          rsync -av --exclude='.git' --exclude='welcome-onboarding' ./ welcome-onboarding/
 
       - name: Create zip archive
-        run: zip -r welcomeonboarding.zip welcomeonboarding/
+        run: zip -r welcome-onboarding.zip welcome-onboarding/
 
       - name: Verify package archive
-        run: ls -lah welcomeonboarding.zip
+        run: ls -lah welcome-onboarding.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: welcomeonboarding
-          path: welcomeonboarding.zip
+          path: welcome-onboarding.zip
 
       - name: Upload zip to GitHub Release
         env:
