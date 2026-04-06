@@ -110,4 +110,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh --version
-          gh release upload "${{ steps.release.outputs.tag }}" welcomeonboarding.zip --repo "${{ github.repository }}" --clobber
+          gh release upload "${{ steps.release.outputs.tag }}" welcome-onboarding.zip --repo "${{ github.repository }}" --clobber
