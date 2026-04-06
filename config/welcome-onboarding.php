@@ -7,6 +7,7 @@ return [
         'heading' => 'Welcome to :app, :name!',
         'intro_text' => 'Your account is ready. Use the button below to set your password and sign in to the panel.',
         'setup_button_label' => 'Set Up Your Account',
+        'setup_button_url' => '',
         'welcome_url' => '',
         'welcome_link_label' => 'Getting Started',
         'discord_url' => '',

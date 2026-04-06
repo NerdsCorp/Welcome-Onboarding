@@ -2,9 +2,11 @@
 
 namespace WelcomeOnboarding\Providers;
 
-use App\Notifications\AccountCreated;
-use Illuminate\Notifications\Events\NotificationSending;
-use Illuminate\Support\Facades\Event;
+use App\Models\User;
+use Filament\Facades\Filament;
+use Illuminate\Auth\Passwords\PasswordBroker;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use WelcomeOnboarding\Notifications\WelcomeAccountCreated;
 use WelcomeOnboarding\Support\SettingsRepository;
@@ -20,19 +22,39 @@ class WelcomeOnboardingPluginProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Event::listen(NotificationSending::class, function (NotificationSending $event) {
-            if ($event->channel !== 'mail' || !$event->notification instanceof AccountCreated) {
-                return null;
-            }
+        User::created(function (User $user) {
+            try {
+                $settings = app(SettingsRepository::class)->all();
 
-            $settings = app(SettingsRepository::class)->all();
-            if (!$settings['enabled']) {
-                return null;
-            }
+                Log::info('Welcome Onboarding: user created event fired.', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'plugin_enabled' => $settings['enabled'] ?? null,
+                ]);
 
-            $event->notifiable->notifyNow(new WelcomeAccountCreated($event->notification->token, $settings), ['mail']);
-            
-            return null;
+                if (!$settings['enabled']) {
+                    Log::info('Welcome Onboarding: plugin disabled, skipping onboarding mail.');
+
+                    return;
+                }
+
+                /** @var PasswordBroker $broker */
+                $broker = Password::broker(Filament::getPanel('app')->getAuthPasswordBroker());
+                $token = $broker->createToken($user);
+
+                $user->notifyNow(new WelcomeAccountCreated($token, $settings), ['mail']);
+
+                Log::info('Welcome Onboarding: onboarding mail dispatched.', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
+            } catch (\Throwable $exception) {
+                Log::error('Welcome Onboarding: failed to send onboarding mail.', [
+                    'message' => $exception->getMessage(),
+                    'user_id' => $user->id ?? null,
+                    'email' => $user->email ?? null,
+                ]);
+            }
         });
     }
 }

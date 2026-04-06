@@ -29,9 +29,10 @@ class WelcomeAccountCreated extends Notification implements ShouldQueue
     public function toMail(User $notifiable): MailMessage
     {
         $settings = $this->resolveSettingsForLocale($notifiable->language ?? config('app.locale', 'en'));
-        $setupUrl = $this->token
+        $defaultSetupUrl = $this->token
             ? Filament::getPanel('app')->getResetPasswordUrl($this->token, $notifiable)
             : url('');
+        $setupUrl = $this->resolveSetupUrl($settings, $notifiable, $defaultSetupUrl);
 
         $message = (new MailMessage())
             ->subject($this->replaceTokens((string) ($settings['subject'] ?? 'Welcome to :app'), $notifiable, $setupUrl))
@@ -139,7 +140,7 @@ class WelcomeAccountCreated extends Notification implements ShouldQueue
             return $baseSettings;
         }
 
-        foreach (['subject', 'heading', 'intro_text', 'setup_button_label', 'welcome_link_label', 'first_login_steps', 'closing_text'] as $field) {
+        foreach (['subject', 'heading', 'intro_text', 'setup_button_label', 'setup_button_url', 'welcome_link_label', 'first_login_steps', 'closing_text'] as $field) {
             if (filled($translation[$field] ?? null)) {
                 $baseSettings[$field] = $translation[$field];
             }
@@ -150,5 +151,16 @@ class WelcomeAccountCreated extends Notification implements ShouldQueue
         }
 
         return $baseSettings;
+    }
+
+    private function resolveSetupUrl(array $settings, User $user, string $defaultSetupUrl): string
+    {
+        $configuredUrl = trim((string) ($settings['setup_button_url'] ?? ''));
+
+        if ($configuredUrl === '') {
+            return $defaultSetupUrl;
+        }
+
+        return $this->replaceTokens($configuredUrl, $user, $defaultSetupUrl);
     }
 }

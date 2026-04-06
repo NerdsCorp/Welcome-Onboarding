@@ -3,14 +3,21 @@
 namespace WelcomeOnboarding;
 
 use App\Contracts\Plugins\HasPluginSettings;
+use Filament\Actions\Action;
 use Filament\Contracts\Plugin;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Panel;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Auth\Passwords\PasswordBroker;
+use Illuminate\Support\Facades\Password;
+use WelcomeOnboarding\Notifications\WelcomeAccountCreated;
 use WelcomeOnboarding\Support\SettingsRepository;
 
 class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
@@ -63,6 +70,10 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
                         ->label(trans('welcome-onboarding::ui.fields.setup_button_label'))
                         ->default($settings['setup_button_label'])
                         ->required(),
+                    TextInput::make('setup_button_url')
+                        ->label(trans('welcome-onboarding::ui.fields.setup_button_url'))
+                        ->default($settings['setup_button_url'])
+                        ->helperText(trans('welcome-onboarding::ui.help.setup_button_url')),
                 ]),
             Section::make(trans('welcome-onboarding::ui.sections.links'))
                 ->schema([
@@ -126,22 +137,30 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
                                 ->placeholder('en')
                                 ->helperText(trans('welcome-onboarding::ui.help.locale')),
                             TextInput::make('subject')
-                                ->label(trans('welcome-onboarding::ui.fields.subject')),
+                                ->label(trans('welcome-onboarding::ui.fields.subject'))
+                                ->helperText(trans('welcome-onboarding::ui.help.placeholders')),
                             TextInput::make('heading')
-                                ->label(trans('welcome-onboarding::ui.fields.heading')),
+                                ->label(trans('welcome-onboarding::ui.fields.heading'))
+                                ->helperText(trans('welcome-onboarding::ui.help.placeholders')),
                             Textarea::make('intro_text')
                                 ->label(trans('welcome-onboarding::ui.fields.intro_text'))
-                                ->rows(3),
+                                ->rows(3)
+                                ->helperText(trans('welcome-onboarding::ui.help.placeholders')),
                             TextInput::make('setup_button_label')
                                 ->label(trans('welcome-onboarding::ui.fields.setup_button_label')),
+                            TextInput::make('setup_button_url')
+                                ->label(trans('welcome-onboarding::ui.fields.setup_button_url'))
+                                ->helperText(trans('welcome-onboarding::ui.help.setup_button_url')),
                             TextInput::make('welcome_link_label')
                                 ->label(trans('welcome-onboarding::ui.fields.welcome_link_label')),
                             Textarea::make('first_login_steps')
                                 ->label(trans('welcome-onboarding::ui.fields.first_login_steps'))
-                                ->rows(5),
+                                ->rows(5)
+                                ->helperText(trans('welcome-onboarding::ui.help.placeholders')),
                             Textarea::make('closing_text')
                                 ->label(trans('welcome-onboarding::ui.fields.closing_text'))
-                                ->rows(3),
+                                ->rows(3)
+                                ->helperText(trans('welcome-onboarding::ui.help.placeholders')),
                             Repeater::make('extra_links')
                                 ->label(trans('welcome-onboarding::ui.fields.extra_links'))
                                 ->schema([
@@ -161,6 +180,30 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
                         ->addActionLabel(trans('welcome-onboarding::ui.actions.add_translation'))
                         ->reorderable(false),
                 ]),
+            Actions::make([
+                Action::make('send_test_email')
+                    ->label(trans('welcome-onboarding::ui.actions.send_test_email'))
+                    ->action(function (Get $get) {
+                        $user = user();
+                        if (!$user) {
+                            return;
+                        }
+
+                        /** @var PasswordBroker $broker */
+                        $broker = Password::broker(\Filament\Facades\Filament::getPanel('app')->getAuthPasswordBroker());
+                        $token = $broker->createToken($user);
+
+                        $settings = app(SettingsRepository::class)->normalize($this->getFormState($get));
+
+                        $user->notifyNow(new WelcomeAccountCreated($token, $settings), ['mail']);
+
+                        Notification::make()
+                            ->title(trans('welcome-onboarding::ui.notifications.test_sent_title'))
+                            ->body(trans('welcome-onboarding::ui.notifications.test_sent_body', ['email' => $user->email]))
+                            ->success()
+                            ->send();
+                    }),
+            ]),
         ];
     }
 
@@ -170,5 +213,29 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
     public function saveSettings(array $data): void
     {
         app(SettingsRepository::class)->save($data);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getFormState(Get $get): array
+    {
+        return [
+            'enabled' => $get('enabled'),
+            'subject' => $get('subject'),
+            'heading' => $get('heading'),
+            'intro_text' => $get('intro_text'),
+            'setup_button_label' => $get('setup_button_label'),
+            'setup_button_url' => $get('setup_button_url'),
+            'welcome_url' => $get('welcome_url'),
+            'welcome_link_label' => $get('welcome_link_label'),
+            'discord_url' => $get('discord_url'),
+            'community_url' => $get('community_url'),
+            'support_url' => $get('support_url'),
+            'extra_links' => $get('extra_links'),
+            'first_login_steps' => $get('first_login_steps'),
+            'closing_text' => $get('closing_text'),
+            'translations' => $get('translations'),
+        ];
     }
 }
