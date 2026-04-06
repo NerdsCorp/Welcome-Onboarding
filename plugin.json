@@ -1,0 +1,16 @@
+{
+    "id": "welcome-onboarding",
+    "name": "Welcome Onboarding",
+    "author": "Kristopher Reeves",
+    "version": "1.0.0",
+    "description": "Custom account-created onboarding emails with editable welcome text, setup links, community links, and first-login instructions.",
+    "category": "plugin",
+    "url": null,
+    "update_url": null,
+    "namespace": "WelcomeOnboarding",
+    "class": "WelcomeOnboardingPlugin",
+    "panels": null,
+    "panel_version": null,
+    "composer_packages": null
+    
+}
