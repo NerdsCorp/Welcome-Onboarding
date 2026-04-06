@@ -187,7 +187,7 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
                         ->content(trans('welcome-onboarding::ui.help.testing_target', ['email' => user()?->email ?? ''])),
                 ])
                 ->headerActions([
-                    Action::make('send_test_email')
+                    Action::make('exclude_send_test_email')
                         ->label(trans('welcome-onboarding::ui.actions.send_test_email'))
                         ->action(function (Get $get) {
                             $user = user();
