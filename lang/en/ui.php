@@ -6,6 +6,7 @@ return [
         'links' => 'Links',
         'first_login' => 'First Login',
         'localization' => 'Localization',
+        'testing' => 'Testing',
     ],
     'fields' => [
         'enabled' => 'Enable custom onboarding email',
@@ -34,6 +35,8 @@ return [
         'one_per_line' => 'Enter one step per line.',
         'localization' => 'Add locale-specific overrides like en, en-us, de, or fr. Empty fields fall back to the default content above.',
         'locale' => 'Use a locale code such as en, en-us, de, or fr.',
+        'testing' => 'Send yourself a test onboarding email using the current form values.',
+        'testing_target' => 'The test email will be sent to :email.',
     ],
     'actions' => [
         'add_link' => 'Add link',
