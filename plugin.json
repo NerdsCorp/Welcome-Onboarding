@@ -2,7 +2,7 @@
   "id": "welcome-onboarding",
   "name": "Welcome Onboarding",
   "author": "Kristopher Reeves (Dr.Reeves)",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Custom account-created onboarding emails with editable welcome text, setup links, community links, and first-login instructions.",
   "category": "plugin",
   "update_url": "https://raw.githubusercontent.com/NerdsCorp/welcome-onboarding/refs/heads/main/update.json",
