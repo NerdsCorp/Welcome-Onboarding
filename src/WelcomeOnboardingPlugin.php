@@ -11,7 +11,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Panel;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -46,6 +45,30 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
 
         return [
             Section::make(trans('welcome-onboarding::ui.sections.behavior'))
+                ->headerActions([
+                    Action::make('send_test_email')
+                        ->label(trans('welcome-onboarding::ui.actions.send_test_email'))
+                        ->action(function (Get $get) {
+                            $user = user();
+                            if (!$user) {
+                                return;
+                            }
+
+                            /** @var PasswordBroker $broker */
+                            $broker = Password::broker(\Filament\Facades\Filament::getPanel('app')->getAuthPasswordBroker());
+                            $token = $broker->createToken($user);
+
+                            $settings = app(SettingsRepository::class)->normalize($this->getFormState($get));
+
+                            $user->notifyNow(new WelcomeAccountCreated($token, $settings), ['mail']);
+
+                            Notification::make()
+                                ->title(trans('welcome-onboarding::ui.notifications.test_sent_title'))
+                                ->body(trans('welcome-onboarding::ui.notifications.test_sent_body', ['email' => $user->email]))
+                                ->success()
+                                ->send();
+                        }),
+                ])
                 ->schema([
                     Toggle::make('enabled')
                         ->label(trans('welcome-onboarding::ui.fields.enabled'))
@@ -180,30 +203,6 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
                         ->addActionLabel(trans('welcome-onboarding::ui.actions.add_translation'))
                         ->reorderable(false),
                 ]),
-            Actions::make([
-                Action::make('send_test_email')
-                    ->label(trans('welcome-onboarding::ui.actions.send_test_email'))
-                    ->action(function (Get $get) {
-                        $user = user();
-                        if (!$user) {
-                            return;
-                        }
-
-                        /** @var PasswordBroker $broker */
-                        $broker = Password::broker(\Filament\Facades\Filament::getPanel('app')->getAuthPasswordBroker());
-                        $token = $broker->createToken($user);
-
-                        $settings = app(SettingsRepository::class)->normalize($this->getFormState($get));
-
-                        $user->notifyNow(new WelcomeAccountCreated($token, $settings), ['mail']);
-
-                        Notification::make()
-                            ->title(trans('welcome-onboarding::ui.notifications.test_sent_title'))
-                            ->body(trans('welcome-onboarding::ui.notifications.test_sent_body', ['email' => $user->email]))
-                            ->success()
-                            ->send();
-                    }),
-            ]),
         ];
     }
 
