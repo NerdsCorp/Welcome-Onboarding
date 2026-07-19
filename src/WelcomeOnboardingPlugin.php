@@ -37,11 +37,19 @@ class WelcomeOnboardingPlugin implements Plugin, HasPluginSettings
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function getSettingsFormData(): array
+    {
+        return app(SettingsRepository::class)->all();
+    }
+
+    /**
      * @return Component[]
      */
     public function getSettingsForm(): array
     {
-        $settings = app(SettingsRepository::class)->all();
+        $settings = $this->getSettingsFormData();
 
         return [
             Section::make(trans('welcome-onboarding::ui.sections.behavior'))
